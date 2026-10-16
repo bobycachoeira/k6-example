@@ -49,6 +49,12 @@ SCENARIOS=get,create ./scripts/run.sh dynamic
 
 # Selecionar a full exige taxa > 0
 SCENARIOS=full FULL_RPS=2 DURATION=1m ./scripts/run.sh dynamic
+
+# Modo mix: total de iterações/s dividido por percentuais (mistura de produção)
+TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
+
+# Mix com pesos relativos (normalizados automaticamente)
+TOTAL_RPS=50 MIX=get:5,create:3,full:2 DURATION=1m ./scripts/run.sh dynamic
 ```
 
 ## 4. Flags e variáveis de ambiente

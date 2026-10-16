@@ -4,6 +4,13 @@ const JOURNEYS = {
   full: { exec: 'fullJourney', envVar: 'FULL_RPS', defaultRate: 0 },
 };
 
+const JOURNEY_NAMES = Object.keys(JOURNEYS).join(', ');
+const MIX_CONFLICTS = ['SCENARIOS', 'GET_RPS', 'CREATE_RPS', 'FULL_RPS'];
+
+function hasEnv(name) {
+  return __ENV[name] !== undefined && __ENV[name] !== '';
+}
+
 function selectedJourneys() {
   return (__ENV.SCENARIOS || '')
     .split(',')
@@ -11,22 +18,105 @@ function selectedJourneys() {
     .filter(Boolean);
 }
 
+function scenarioFor(journey, rate, duration, mode) {
+  return {
+    executor: 'constant-arrival-rate',
+    exec: JOURNEYS[journey].exec,
+    rate,
+    timeUnit: '1s',
+    duration,
+    preAllocatedVUs: Math.max(5, Math.ceil(rate / 2)),
+    maxVUs: Math.max(10, rate * 4),
+    tags: { profile: 'dynamic', journey, mode },
+  };
+}
+
+function parseMix() {
+  const seen = new Set();
+
+  return __ENV.MIX.split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const [name, weightRaw] = part.split(':').map((value) => (value || '').trim());
+
+      if (!JOURNEYS[name]) {
+        throw new Error(`MIX inválido: jornada desconhecida "${name}". Use: ${JOURNEY_NAMES}`);
+      }
+      if (seen.has(name)) {
+        throw new Error(`MIX inválido: jornada "${name}" repetida`);
+      }
+      seen.add(name);
+
+      const weight = Number(weightRaw);
+      if (!Number.isFinite(weight) || weight <= 0) {
+        throw new Error(`MIX inválido para "${name}": peso "${weightRaw}" (use um número > 0)`);
+      }
+
+      return { journey: name, weight };
+    });
+}
+
+function buildMixScenarios(duration) {
+  const conflicts = MIX_CONFLICTS.filter(hasEnv);
+  if (conflicts.length > 0) {
+    throw new Error(
+      `MIX não combina com ${conflicts.join(', ')} — no modo mix use apenas TOTAL_RPS + MIX (+ DURATION)`,
+    );
+  }
+
+  if (!hasEnv('TOTAL_RPS')) {
+    throw new Error('MIX exige TOTAL_RPS (ex.: TOTAL_RPS=100 MIX=get:70,create:30)');
+  }
+
+  const total = Number(__ENV.TOTAL_RPS);
+  if (!Number.isFinite(total) || total <= 0) {
+    throw new Error(`TOTAL_RPS inválido: "${__ENV.TOTAL_RPS}" (use um número > 0)`);
+  }
+
+  const parts = parseMix();
+  if (parts.length === 0) {
+    throw new Error('MIX vazio — formato: MIX=get:70,create:30');
+  }
+
+  const totalWeight = parts.reduce((sum, part) => sum + part.weight, 0);
+  const scenarios = {};
+
+  for (const { journey, weight } of parts) {
+    const rate = Math.max(1, Math.round((total * weight) / totalWeight));
+    scenarios[journey] = scenarioFor(journey, rate, duration, 'mix');
+  }
+
+  return scenarios;
+}
+
 export function buildDynamicScenarios() {
   const duration = __ENV.DURATION || '1m';
+
+  if (hasEnv('MIX')) {
+    return buildMixScenarios(duration);
+  }
+
+  if (hasEnv('TOTAL_RPS')) {
+    throw new Error(
+      'TOTAL_RPS só é usado junto com MIX=... (ex.: TOTAL_RPS=100 MIX=get:70,create:30)',
+    );
+  }
+
   const selection = selectedJourneys();
 
   if (selection.length > 0) {
     const unknown = selection.filter((name) => !JOURNEYS[name]);
     if (unknown.length > 0) {
       throw new Error(
-        `SCENARIOS inválido: "${unknown.join(', ')}". Use: ${Object.keys(JOURNEYS).join(', ')}`,
+        `SCENARIOS inválido: "${unknown.join(', ')}". Use: ${JOURNEY_NAMES}`,
       );
     }
   }
 
   const scenarios = {};
 
-  for (const [journey, { exec, envVar, defaultRate }] of Object.entries(JOURNEYS)) {
+  for (const [journey, { envVar, defaultRate }] of Object.entries(JOURNEYS)) {
     const selected = selection.includes(journey);
     if (selection.length > 0 && !selected) {
       continue;
@@ -48,16 +138,7 @@ export function buildDynamicScenarios() {
       continue;
     }
 
-    scenarios[journey] = {
-      executor: 'constant-arrival-rate',
-      exec,
-      rate,
-      timeUnit: '1s',
-      duration,
-      preAllocatedVUs: Math.max(5, Math.ceil(rate / 2)),
-      maxVUs: Math.max(10, rate * 4),
-      tags: { profile: 'dynamic', journey },
-    };
+    scenarios[journey] = scenarioFor(journey, rate, duration, 'rates');
   }
 
   if (Object.keys(scenarios).length === 0) {

@@ -23,6 +23,16 @@ for name, sc in sorted(d['scenarios'].items()):
 " 2>/dev/null
 }
 
+rate_of() {
+  local journey="$1"
+  shift
+  k6 inspect "$@" 2>/dev/null | python3 -c "
+import json, sys
+sc = json.load(sys.stdin)['scenarios'].get('$journey') or {}
+print(f\"{sc.get('rate', '-')}|{sc.get('exec', '-')}\")
+" 2>/dev/null
+}
+
 thresholds_ok() {
   k6 inspect "$@" 2>/dev/null | python3 -c "
 import json, sys
@@ -34,6 +44,18 @@ sys.exit(0 if all(k in t and t[k] for k in required) else 1)
 
 expect() {
   local desc="$1" expected="$2" got="$3"
+  if [ "$got" = "$expected" ]; then
+    ok "$desc"
+  else
+    bad "$desc (esperado: '$expected' | obtido: '$got')"
+  fi
+}
+
+expect_names() {
+  local desc="$1" expected="$2"
+  shift 2
+  local got
+  got="$(scenarios_of "$@")"
   if [ "$got" = "$expected" ]; then
     ok "$desc"
   else
@@ -114,6 +136,42 @@ expect_fail "SCENARIOS com nome inválido deve falhar" \
 
 expect_fail "jornada selecionada com RPS 0 deve falhar" \
   k6 inspect -e SCENARIOS=create -e CREATE_RPS=0 scenarios/dynamic.js
+
+echo "== 3c. Perfil dynamic: modo mix (TOTAL_RPS + percentuais) =="
+expect "mix: get recebe 70% de 100" \
+  "70|getJourney" \
+  "$(rate_of get -e TOTAL_RPS=100 -e MIX=get:70,create:30 scenarios/dynamic.js)"
+
+expect "mix: create recebe 30% de 100" \
+  "30|createJourney" \
+  "$(rate_of create -e TOTAL_RPS=100 -e MIX=get:70,create:30 scenarios/dynamic.js)"
+
+expect "mix: pesos relativos normalizados (1:1 de 10 = 5)" \
+  "5|getJourney" \
+  "$(rate_of get -e TOTAL_RPS=10 -e MIX=get:1,create:1 scenarios/dynamic.js)"
+
+expect "mix: taxa mínima de 1 por jornada" \
+  "1|createJourney" \
+  "$(rate_of create -e TOTAL_RPS=1 -e MIX=get:1,create:1 scenarios/dynamic.js)"
+
+expect_names "mix: apenas as jornadas do MIX" \
+  "create,get" \
+  -e TOTAL_RPS=10 -e MIX=get:5,create:5 scenarios/dynamic.js
+
+expect_fail "MIX sem TOTAL_RPS deve falhar" \
+  k6 inspect -e MIX=get:70 scenarios/dynamic.js
+
+expect_fail "MIX com jornada desconhecida deve falhar" \
+  k6 inspect -e TOTAL_RPS=10 -e MIX=pizza:1 scenarios/dynamic.js
+
+expect_fail "MIX com peso inválido deve falhar" \
+  k6 inspect -e TOTAL_RPS=10 -e MIX=get:abc scenarios/dynamic.js
+
+expect_fail "MIX combinado com SCENARIOS deve falhar" \
+  k6 inspect -e TOTAL_RPS=10 -e MIX=get:1 -e SCENARIOS=get scenarios/dynamic.js
+
+expect_fail "TOTAL_RPS sem MIX deve falhar" \
+  k6 inspect -e TOTAL_RPS=10 scenarios/dynamic.js
 
 echo "== 4. Contratos dos módulos (k6 run, 1 iteração, sem carga) =="
 if CONTRACT_OUT="$(k6 run tests/contracts.js 2>&1)"; then

@@ -188,6 +188,28 @@ SCENARIOS=get,create ./scripts/run.sh dynamic
 > Jornada selecionada em `SCENARIOS` com taxa resolvida em 0 falha com mensagem clara — para
 > rodar a `full` via `SCENARIOS`, defina `FULL_RPS` maior que 0.
 
+#### Modo mix (percentual de produção)
+
+Passe o total de iterações/s e a divisão percentual entre as jornadas — ideal para simular a
+mistura real de tráfego (use os percentuais do seu APM/produção):
+
+| Variável | Papel |
+|---|---|
+| `TOTAL_RPS` | Total de iterações/s somando todas as jornadas |
+| `MIX` | Lista `jornada:peso,...` — os pesos são normalizados (não precisam somar 100) |
+
+```bash
+# 100 iterações/s totais: 70% leitura + 30% escrita, por 2 minutos
+TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
+
+# Três jornadas com pesos relativos
+TOTAL_RPS=50 MIX=get:5,create:3,full:2 DURATION=1m ./scripts/run.sh dynamic
+```
+
+> No modo mix, use apenas `TOTAL_RPS`, `MIX` e `DURATION` — combinar com `SCENARIOS`/`*_RPS`
+> gera erro para evitar ambiguidade. As taxas são arredondadas (mínimo 1/s) e, como sempre,
+> referem-se a **iterações da jornada** (cada iteração da `get` dispara 4 requisições).
+
 > A taxa configurada é de **iterações da jornada por segundo**, não de requisições HTTP.
 > Cada iteração de `getJourney()` dispara 4 requisições (listar posts, ler post, ler comentários,
 > listar usuários) e cada iteração de `createJourney()` dispara 1. Exemplo: `GET_RPS=20` gera
