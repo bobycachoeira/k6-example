@@ -19,6 +19,19 @@ grafana/      Provisioning do Grafana (datasource + dashboard)
 results/      Artefatos gerados (ignorados pelo Git)
 ```
 
+## Jornadas
+
+As jornadas ficam em `lib/journey.js` e podem ser compostas de três formas:
+
+| Jornada | O que executa |
+|---|---|
+| `getJourney()` | Somente leitura: listar posts, ler post, ler comentários e listar usuários |
+| `createJourney()` | Somente escrita: criar post |
+| `fullJourney()` | Leituras + escrita, contabiliza um fluxo de negócio e pausa entre iterações |
+
+O perfil `smoke` executa `getJourney()` e `createJourney()` separadamente — exemplo de uso
+individual de cada jornada. Os perfis `load`, `stress` e `spike` executam a `fullJourney()`.
+
 ## Pré-requisitos
 
 - [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) v1+ instalado

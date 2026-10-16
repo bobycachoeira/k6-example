@@ -1,11 +1,12 @@
 import { buildOptions } from '../config/options.js';
-import { fullJourney } from '../lib/journey.js';
+import { createJourney, getJourney } from '../lib/journey.js';
 import { makeHandleSummary } from '../lib/report.js';
 
 export const options = buildOptions();
 
 export default function () {
-  fullJourney();
+  getJourney();
+  createJourney();
 }
 
 export const handleSummary = makeHandleSummary();
