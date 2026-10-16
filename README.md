@@ -32,6 +32,16 @@ As jornadas ficam em `lib/journey.js` e podem ser compostas de três formas:
 O perfil `smoke` executa `getJourney()` e `createJourney()` separadamente — exemplo de uso
 individual de cada jornada. Os perfis `load`, `stress` e `spike` executam a `fullJourney()`.
 
+## Adicionando uma nova jornada
+
+As jornadas são a camada que compõe os fluxos de negócio (`lib/journey.js` é quem controla tudo).
+Para criar uma nova — por exemplo, um fluxo que combina leitura e escrita de outra forma:
+
+1. Escreva a função em `lib/journey.js`, compondo os passos existentes (`listPosts`, `createPost`, ...);
+2. Use-a nos cenários que precisarem (ex.: no `default` de um perfil);
+3. Para rodá-la por RPS no perfil `dynamic`: exporte-a em `scenarios/dynamic.js` e adicione a
+   entrada correspondente em `config/dynamic.js` (nome, `exec` e taxa padrão).
+
 ## Pré-requisitos
 
 - [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) v1+ instalado
@@ -53,6 +63,14 @@ Para apontar para outro alvo:
 
 ```bash
 BASE_URL=https://sua-api.exemplo.com ./scripts/run.sh smoke
+```
+
+Também dá para executar direto pelo k6 — cada arquivo de cenário já define o próprio perfil,
+sem precisar de variáveis de ambiente:
+
+```bash
+k6 run scenarios/load.js
+K6_OUT=influxdb=http://localhost:8086/k6 k6 run scenarios/load.js
 ```
 
 ## Resultados gerados
@@ -92,10 +110,36 @@ docker compose --profile run up k6
 
 | Perfil | Executor | Objetivo |
 |---|---|---|
-| `smoke` | 1 VU por 10s | Validar que o script e o alvo funcionam |
+| `smoke` | 1 VU por 10s | Validar que o script e o alvo funcionam (executa `getJourney` + `createJourney` em sequência no mesmo VU) |
 | `load` | Arrival rate com rampa | Comportamento sob carga esperada |
 | `stress` | VUs com rampa crescente | Encontrar o limite do sistema |
 | `spike` | Pico de 2 → 60 req/s | Reação a picos súbitos |
+| `dynamic` | Arrival rate por jornada | Taxa (RPS) definida por variável de ambiente, por jornada |
+
+### Perfil dinâmico (por RPS)
+
+No perfil `dynamic`, **cada jornada é um cenário independente do k6**, com seu próprio pool de
+VUs, e a taxa de requisições de cada uma é definida por variáveis de ambiente — omita ou use `0`
+para não executar uma jornada:
+
+| Variável | Jornada | Padrão |
+|---|---|---|
+| `GET_RPS` | `getJourney` (leitura) | 20 |
+| `CREATE_RPS` | `createJourney` (escrita) | 5 |
+| `FULL_RPS` | `fullJourney` (completa) | 0 (desligada) |
+| `DURATION` | Duração de cada cenário | 1m |
+
+```bash
+# 30 req/s só de leitura, por 2 minutos
+GET_RPS=30 CREATE_RPS=0 DURATION=2m ./scripts/run.sh dynamic
+
+# Leitura e escrita juntas, mix 20/5 req/s por 5 minutos
+GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
+```
+
+> Dica de VUs no k6: o número de VUs é por cenário — cenários não compartilham VUs.
+> Uma taxa de chegada (`arrival rate`) também é diferente de VUs fixos: o k6 aloca os VUs
+> necessários para sustentar a taxa configurada.
 
 Thresholds globais (em `config/options.js`): `checks > 99%`, `http_req_failed < 1%`,
 `http_req_duration p95 < 800ms` e `p99 < 1500ms`, `api_latency p95 < 800ms`.

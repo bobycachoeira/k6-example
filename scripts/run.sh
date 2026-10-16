@@ -7,7 +7,7 @@ cd "$ROOT"
 
 if [ ! -f "scenarios/${PROFILE}.js" ]; then
   echo "Perfil inválido: \"${PROFILE}\""
-  echo "Disponíveis: smoke, load, stress, spike"
+  echo "Disponíveis: smoke, load, stress, spike, dynamic"
   exit 1
 fi
 
@@ -28,7 +28,7 @@ echo "Executando perfil '${PROFILE}' — resultados em ${OUT}/"
 echo ""
 
 set +e
-RESULTS_DIR="$OUT" k6 run \
+PROFILE="$PROFILE" RESULTS_DIR="$OUT" k6 run \
   --out "json=${OUT}/raw.json.gz" \
   --out "csv=${OUT}/metrics.csv" \
   "scenarios/${PROFILE}.js" 2>&1 | tee "${OUT}/console.log"

@@ -1,4 +1,5 @@
 import { PROFILE } from './env.js';
+import { buildDynamicScenarios } from './dynamic.js';
 
 const commonThresholds = {
   checks: ['rate>0.99'],
@@ -55,18 +56,23 @@ export const profiles = {
   },
 };
 
-export function buildOptions(extra = {}) {
-  const scenario = profiles[PROFILE];
-  if (!scenario) {
-    throw new Error(
-      `Perfil desconhecido: "${PROFILE}". Use um de: ${Object.keys(profiles).join(', ')}`,
-    );
-  }
-
-  return {
-    scenarios: { [PROFILE]: scenario },
+export function buildOptions(profile = PROFILE, extra = {}) {
+  const base = {
     thresholds: commonThresholds,
     summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
     ...extra,
   };
+
+  if (profile === 'dynamic') {
+    return { ...base, scenarios: buildDynamicScenarios() };
+  }
+
+  const scenario = profiles[profile];
+  if (!scenario) {
+    throw new Error(
+      `Perfil desconhecido: "${profile}". Use um de: ${Object.keys(profiles).join(', ')}, dynamic`,
+    );
+  }
+
+  return { ...base, scenarios: { [profile]: scenario } };
 }
