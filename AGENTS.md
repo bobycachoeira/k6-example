@@ -41,6 +41,7 @@ Leia antes de alterar qualquer coisa.
 
 ```bash
 ./scripts/check.sh                                 # validações sem carga (rápido — sempre rode)
+./scripts/run.sh --help                            # ajuda: perfis, flags e variáveis
 ./scripts/run.sh smoke                             # execução real curta contra o alvo
 GET_RPS=20 CREATE_RPS=5 ./scripts/run.sh dynamic   # perfil por RPS
 SCENARIOS=get,create ./scripts/run.sh dynamic      # seleção explícita de jornadas

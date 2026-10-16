@@ -12,6 +12,12 @@ Começando agora? Rode o **Quickstart** e depois pule para a seção que precisa
 
 ---
 
+## 0. Ajuda embutida
+
+```bash
+./scripts/run.sh --help   # perfis, flags, variáveis e exemplos direto no terminal
+```
+
 ## 1. Validação (sem carga)
 
 ```bash
@@ -20,7 +26,7 @@ k6 run tests/contracts.js           # só os contratos dos módulos (1 iteraçã
 k6 inspect scenarios/smoke.js       # inspeciona as opções geradas por um perfil
 ```
 
-## 2. Execuções (perfis)
+## 2. Execuções (perfis fixos)
 
 ```bash
 ./scripts/run.sh smoke     # 1 VU por 10s — valida que script e alvo funcionam
@@ -29,55 +35,91 @@ k6 inspect scenarios/smoke.js       # inspeciona as opções geradas por um perf
 ./scripts/run.sh spike     # pico súbito (2 → 60 req/s) — reação a picos
 ```
 
-## 3. Perfil dynamic (por RPS)
+## 3. Alvos, ambientes e identificação
 
 ```bash
-# Padrão: get 20/s + create 5/s durante 1m
-./scripts/run.sh dynamic
+# Outro alvo (staging, local, etc.)
+BASE_URL=https://staging.sua-api.com ./scripts/run.sh smoke
+BASE_URL=http://localhost:8090 ./scripts/run.sh dynamic
 
-# Só leitura, 30/s por 2 minutos
+# Nome do ambiente (vira a tag env=<nome> em todas as métricas)
+ENV_NAME=staging ./scripts/run.sh load
+
+# RUN_ID próprio (aparece no metadata.txt e nas tags testid/testName)
+RUN_ID=black-friday-sim-01 ./scripts/run.sh load
+
+# Flags extras repassadas direto ao k6 (tags, --summary-trend-stats, etc.)
+K6_EXTRA_FLAGS="--tag squad=checkout --tag regiao=br" ./scripts/run.sh smoke
+
+# Carregue tudo de uma vez pelo .env (o run.sh lê automaticamente)
+cp .env.example .env    # edite BASE_URL, ENV_NAME etc. e rode normalmente
+```
+
+## 4. Perfil dynamic — modos de execução
+
+O perfil `dynamic` roda cada jornada como um cenário independente (taxa de chegada + pool de VUs
+próprio). Ele tem **3 modos** — escolha um por execução:
+
+### 4.1 Taxas por jornada (RPS explícito)
+
+```bash
+./scripts/run.sh dynamic                            # padrão: get 20/s + create 5/s por 1m
 GET_RPS=30 CREATE_RPS=0 DURATION=2m ./scripts/run.sh dynamic
-
-# Mix leitura + escrita (atenção: taxa = iterações da jornada/s, não requisições)
 GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
+FULL_RPS=5 DURATION=1m ./scripts/run.sh dynamic     # jornada completa (com pausa entre iterações)
+```
 
-# Jornada completa (inclui pausa entre iterações)
-FULL_RPS=5 DURATION=1m ./scripts/run.sh dynamic
+### 4.2 Seleção explícita de jornadas
 
-# Seleção explícita de jornadas (taxas padrão aplicadas às escolhidas)
-SCENARIOS=get,create ./scripts/run.sh dynamic
-
-# Selecionar a full exige taxa > 0
+```bash
+SCENARIOS=get,create ./scripts/run.sh dynamic       # só as escolhidas (taxas padrão)
 SCENARIOS=full FULL_RPS=2 DURATION=1m ./scripts/run.sh dynamic
+```
 
-# Modo mix: total de iterações/s dividido por percentuais (mistura de produção)
+### 4.3 Mix percentual (mistura de produção) — `TOTAL_RPS` + `MIX`
+
+```bash
+# 100 iterações/s totais: 70% leitura + 30% escrita, por 2 minutos
 TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
 
-# Mix com pesos relativos (normalizados automaticamente)
+# Três jornadas com pesos relativos (normalizados automaticamente)
 TOTAL_RPS=50 MIX=get:5,create:3,full:2 DURATION=1m ./scripts/run.sh dynamic
 ```
 
-## 4. Flags e variáveis de ambiente
+> Pesos não precisam somar 100 (são normalizados). Taxas são arredondadas (mínimo 1/s).
+> No modo mix use **apenas** `TOTAL_RPS`, `MIX` e `DURATION` — combinar com `SCENARIOS`/`*_RPS`
+> gera erro. Lembre: a taxa é de **iterações da jornada** (a `get` faz 4 requisições por iteração).
 
-| Flag / variável | Exemplo |
-|---|---|
-| `--influx` | `./scripts/run.sh load --influx` |
-| `--logs-json` | `./scripts/run.sh smoke --logs-json` |
-| `BASE_URL` | `BASE_URL=https://sua-api.com ./scripts/run.sh smoke` |
-| `RUN_ID` | `RUN_ID=minha-run-01 ./scripts/run.sh smoke` |
-| `K6_INFLUX_URL` | `K6_INFLUX_URL=http://outro-host:8086/k6 ./scripts/run.sh smoke --influx` |
-| `ENV_NAME` | `ENV_NAME=staging ./scripts/run.sh smoke` |
-| `GET_RPS` / `CREATE_RPS` / `FULL_RPS` | seção 3 |
-| `DURATION` | `DURATION=30s` (apenas no dynamic) |
-| `SCENARIOS` | `SCENARIOS=get,create` (apenas no dynamic) |
-
-Arquivo `.env` (carregado automaticamente pelo `run.sh`):
+### 4.4 Pré-visualizar sem rodar (dry-run de opções)
 
 ```bash
-cp .env.example .env    # edite BASE_URL, ENV_NAME etc.
+k6 inspect scenarios/dynamic.js
+k6 inspect -e TOTAL_RPS=100 -e MIX=get:70,create:30 scenarios/dynamic.js
+k6 inspect -e GET_RPS=50 scenarios/dynamic.js
 ```
 
-## 5. Observabilidade (Grafana + InfluxDB)
+## 5. Flags do run.sh e variáveis
+
+| Flag | Efeito |
+|---|---|
+| `--influx` | Envia métricas em tempo real ao InfluxDB/Grafana local |
+| `--logs-json` | Logs do k6 em JSON (útil para pipelines) |
+| `-h`, `--help` | Ajuda completa |
+
+| Variável | Exemplo | Onde vale |
+|---|---|---|
+| `BASE_URL` | `BASE_URL=https://staging.api.com` | todos |
+| `ENV_NAME` | `ENV_NAME=staging` | todos |
+| `RUN_ID` | `RUN_ID=bf-sim-01` | todos |
+| `K6_INFLUX_URL` | `K6_INFLUX_URL=http://host:8086/k6` | com `--influx` |
+| `K6_EXTRA_FLAGS` | `K6_EXTRA_FLAGS="--tag squad=x"` | todos |
+| `GET_RPS` / `CREATE_RPS` / `FULL_RPS` | `GET_RPS=30` | dynamic |
+| `DURATION` | `DURATION=2m` | dynamic |
+| `SCENARIOS` | `SCENARIOS=get,create` | dynamic |
+| `TOTAL_RPS` + `MIX` | `TOTAL_RPS=100 MIX=get:70,create:30` | dynamic (modo mix) |
+| `K6_OUT` | — | só com `k6 run` direto (ignorado com `--out`) |
+
+## 6. Observabilidade (Grafana + InfluxDB)
 
 ```bash
 docker compose up -d influxdb grafana     # sobe a stack (Grafana: http://localhost:3000)
@@ -90,14 +132,14 @@ docker compose --profile run up k6        # smoke rodando dentro do Compose
 docker compose exec influxdb influx -database k6 -execute 'SHOW MEASUREMENTS'
 docker compose exec influxdb influx -database k6 -execute 'SELECT count(value) FROM successful_reads'
 docker compose exec influxdb influx -database k6 -precision rfc3339 -execute 'SELECT last(value) FROM get_journey_duration'
+docker compose exec influxdb influx -database k6 -execute 'SHOW TAG VALUES FROM http_reqs WITH KEY = "testid"'
 
 docker compose down                       # para tudo (use -v para apagar os dados)
 ```
 
-Dashboard provisionado: **k6 — Visão geral** (latência p95, RPS, VUs, falhas, leituras,
-escritas e tempos por jornada). Filtre por `testid` para comparar execuções.
+No Grafana, filtre por `testid` para comparar execuções. Dashboard: **k6 — Visão geral**.
 
-## 6. Analisar resultados
+## 7. Analisar resultados
 
 ```bash
 ls -t results | head                                   # últimas execuções (mais recente primeiro)
@@ -122,16 +164,21 @@ for name, metric in sorted(m.items()):
 EOF
 ```
 
-## 7. k6 direto / Docker
+## 8. k6 direto / Docker (flexível)
 
 ```bash
-k6 run scenarios/load.js                                          # cada arquivo define o próprio perfil
-K6_OUT=influxdb=http://localhost:8086/k6 k6 run scenarios/load.js # sem flag --out, K6_OUT funciona
+# k6 direto — cada arquivo define o próprio perfil
+k6 run scenarios/load.js
+K6_OUT=influxdb=http://localhost:8086/k6 k6 run scenarios/load.js
+
+# Docker com perfil e envs customizados (comando é sobrescrito)
+docker compose --profile run run --rm k6 run scenarios/dynamic.js
+docker compose --profile run run --rm -e DURATION=30s -e TOTAL_RPS=20 -e MIX=get:70,create:30 \
+  k6 run scenarios/dynamic.js
+docker compose --profile run run --rm -e BASE_URL=https://outro-alvo.com k6 run scenarios/smoke.js
 ```
 
-> Atenção: o k6 ignora `K6_OUT` quando existem flags `--out`. Via `run.sh`, use `--influx`.
-
-## 8. Desenvolvimento (novos cenários e jornadas)
+## 9. Desenvolvimento (novos cenários e jornadas)
 
 ```bash
 cat agents/criar-cenario.md    # playbook: adicionar um novo perfil
@@ -143,7 +190,7 @@ cat AGENTS.md                  # contexto para agentes de IA (arquitetura e inva
 ./scripts/check.sh && ./scripts/run.sh smoke
 ```
 
-## 9. CI (GitHub Actions)
+## 10. CI (GitHub Actions)
 
 ```bash
 gh run list        # histórico das execuções (check + smoke a cada push/PR)
@@ -160,3 +207,23 @@ gh run download <run-id> -n k6-resultados                # execução específic
 
 > O Chrome às vezes bloqueia o `.zip` de artefatos do GitHub como "arquivo perigoso"
 > (falso positivo do Safe Browsing). Com `gh run download` você contorna isso por completo.
+
+---
+
+## Receitas prontas
+
+```bash
+# 1. Simular pico de e-commerce: mix de produção em volume alto, 5 min, indo pro Grafana
+TOTAL_RPS=300 MIX=get:70,create:30 DURATION=5m ENV_NAME=prod-sim RUN_ID=bf-sim-01 \
+  ./scripts/run.sh dynamic --influx
+
+# 2. Comparar execuções no Grafana (filtre pelo testid no dashboard)
+RUN_ID=antes-deploy  ./scripts/run.sh load --influx
+RUN_ID=depois-deploy ./scripts/run.sh load --influx
+
+# 3. Pipeline local: logs em JSON + exit code para o CI
+./scripts/run.sh smoke --logs-json || echo "thresholds violados — analise results/*/summary.html"
+
+# 4. Validar mudanças no próprio projeto sem tocar o alvo
+./scripts/check.sh
+```

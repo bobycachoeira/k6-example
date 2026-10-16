@@ -188,6 +188,12 @@ else
   bad "scripts/run.sh com sintaxe válida"
 fi
 
+if ./scripts/run.sh --help 2>/dev/null | grep -q "Uso: ./scripts/run.sh"; then
+  ok "scripts/run.sh --help funciona"
+else
+  bad "scripts/run.sh --help funciona"
+fi
+
 echo ""
 echo "Resultado: ${PASS} ok, ${FAIL} falha(s)"
 [ "$FAIL" -eq 0 ] || exit 1

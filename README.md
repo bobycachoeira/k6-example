@@ -75,7 +75,8 @@ Flags disponíveis:
 
 O `run.sh` carrega um `.env` da raiz automaticamente (copie o `.env.example`), gera um `RUN_ID`
 por execução e adiciona as tags `testid`/`testName` às métricas — o cabeçalho impresso mostra
-k6, commit, perfil, run_id e alvo.
+k6, commit, perfil, run_id e alvo. Ajuda embutida: `./scripts/run.sh --help`. Flags extras do
+k6: `K6_EXTRA_FLAGS="--tag squad=checkout" ./scripts/run.sh smoke`.
 
 Para apontar para outro alvo:
 
