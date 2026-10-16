@@ -87,7 +87,7 @@ Cada execução cria `results/<data>-<perfil>/` com:
 
 | Arquivo | Conteúdo |
 |---|---|
-| `console.log` | Saída completa do k6 (resumo textual incluído) |
+| `console.log` | Saída completa do k6, incluindo o resumo formatado no final (THRESHOLDS, CUSTOM, HTTP, EXECUTION, NETWORK) |
 | `summary.json` | Sumário estruturado de todas as métricas |
 | `summary.html` | Relatório visual (thresholds e métricas) |
 | `raw.json.gz` | Stream completo de métricas, ponto a ponto |
