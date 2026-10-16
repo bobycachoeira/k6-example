@@ -21,6 +21,8 @@ agents/       Playbooks para agentes de IA (criar cenário/jornada, avaliar resu
 results/      Artefatos gerados (ignorados pelo Git)
 ```
 
+> Referência rápida de todos os comandos: [`COMMANDS.md`](COMMANDS.md).
+
 ## Jornadas
 
 As jornadas ficam em `lib/journey.js` e podem ser compostas de três formas:

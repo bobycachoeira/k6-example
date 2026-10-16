@@ -21,6 +21,7 @@ Leia antes de alterar qualquer coisa.
 | `tests/contracts.js` | Contratos dos módulos — 1 iteração, sem carga |
 | `grafana/` | Datasource + dashboard provisionados |
 | `agents/` | Playbooks por tarefa (ver seção Playbooks) |
+| `COMMANDS.md` | Referência rápida de comandos (execuções, flags, Grafana, análise, CI) |
 
 ## Invariantes (nunca quebre)
 
