@@ -17,6 +17,7 @@ scenarios/    Arquivos executáveis pelo k6 (um por perfil)
 scripts/      run.sh — orquestra a execução e guarda todos os resultados; check.sh — valida sem carga
 tests/        contracts.js — testes de contrato dos módulos (1 iteração, sem carga)
 grafana/      Provisioning do Grafana (datasource + dashboard)
+agents/       Playbooks para agentes de IA (criar cenário/jornada, avaliar resultados, evoluir)
 results/      Artefatos gerados (ignorados pelo Git)
 ```
 
@@ -174,6 +175,19 @@ pronto para uso em pipelines de CI.
 
 O workflow `.github/workflows/k6-smoke.yml` roda `./scripts/check.sh` (validações sem carga) e o
 perfil `smoke` a cada push/PR, publicando a pasta `results/` como artefato.
+
+## Uso com IA (agentes)
+
+O projeto é **AI-ready**: o [`AGENTS.md`](AGENTS.md) descreve arquitetura, invariantes e comandos,
+e a pasta [`agents/`](agents/) traz playbooks por tarefa:
+
+- [`agents/criar-cenario.md`](agents/criar-cenario.md) — adicionar um novo perfil de execução
+- [`agents/criar-jornada.md`](agents/criar-jornada.md) — adicionar um novo fluxo de negócio
+- [`agents/avaliar-resultados.md`](agents/avaliar-resultados.md) — interpretar os artefatos de uma execução
+- [`agents/evolucao.md`](agents/evolucao.md) — evoluir o projeto com segurança
+
+Agentes como opencode, Claude Code, Cursor e Copilot leem o `AGENTS.md` automaticamente — a
+qualquer mudança, o contrato é sempre o mesmo: `./scripts/check.sh` com 0 falhas.
 
 ## Licença
 
