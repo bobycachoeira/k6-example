@@ -27,7 +27,7 @@ thresholds_ok() {
   k6 inspect "$@" 2>/dev/null | python3 -c "
 import json, sys
 t = json.load(sys.stdin).get('thresholds') or {}
-required = ['checks', 'http_req_failed', 'http_req_duration', 'api_latency']
+required = ['checks', 'http_req_failed', 'http_req_duration', 'api_latency', 'dropped_iterations']
 sys.exit(0 if all(k in t and t[k] for k in required) else 1)
 "
 }

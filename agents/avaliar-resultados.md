@@ -26,8 +26,10 @@ Métricas-chave:
   operação das jornadas get/create (falhas podem estar ausentes quando não há amostras)
 - `read_response_time` / `create_response_time` e `get_journey_duration` / `create_journey_duration`
   — tempos (ms) por operação e por jornada completa
-- `dropped_iterations` — se existir e for > 0, o k6 **não conseguiu sustentar a taxa**
-  configurada (faltaram VUs) — sinal de saturação do gerador ou do alvo
+- `dropped_iterations` — quando > 0, o k6 não conseguiu sustentar a taxa configurada (faltaram
+  VUs): o threshold global `count==0` marca a execução como **inválida** (`result=invalido_threshold_violado`
+  no `metadata.txt`). Resultados assim não devem alimentar análise/baseline; o exit code será diferente
+  de zero
 - `business_flows.values.count` — fluxos completos executados
 - Por métrica, `thresholds`: `{"<expressão>": {"ok": true|false}}` — status de cada threshold
 

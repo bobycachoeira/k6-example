@@ -198,9 +198,16 @@ SCENARIOS=get,create ./scripts/run.sh dynamic
 > necessários para sustentar a taxa configurada.
 
 Thresholds globais (em `config/options.js`): `checks > 99%`, `http_req_failed < 1%`,
-`http_req_duration p95 < 800ms` e `p99 < 1500ms`, `api_latency p95 < 800ms`.
-Ao violar um threshold, o `run.sh` termina com exit code diferente de zero —
-pronto para uso em pipelines de CI.
+`http_req_duration p95 < 800ms` e `p99 < 1500ms`, `api_latency p95 < 800ms` e
+`dropped_iterations == 0`.
+
+O threshold de `dropped_iterations` invalida a medição: se o k6 não conseguir sustentar a taxa
+de chegada (faltaram VUs), as iterações são descartadas e a execução termina com falha — o
+resultado **não serve para análise**. Vale para os perfis de taxa de chegada (`load`, `spike` e
+`dynamic`); nos demais a métrica nem existe e o threshold é ignorado.
+
+Ao violar qualquer threshold, o `run.sh` termina com exit code diferente de zero, registra
+`result=invalido_threshold_violado` no `metadata.txt` e falha no CI — pronto para pipelines.
 
 ## Métricas customizadas
 

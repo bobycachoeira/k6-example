@@ -27,7 +27,8 @@ Leia antes de alterar qualquer coisa.
 
 1. `./scripts/check.sh` deve terminar com `0 falha(s)` — rode após qualquer mudança.
 2. Cada perfil mantém os thresholds obrigatórios: `checks`, `http_req_failed`,
-   `http_req_duration` e `api_latency` (definidos em `config/options.js`).
+   `http_req_duration`, `api_latency` e `dropped_iterations` (definidos em `config/options.js`).
+   Nunca remova o de `dropped_iterations`: ele invalida execuções que perderam VUs.
 3. Arquivos em `scenarios/` declaram o próprio perfil explicitamente
    (`buildOptions('smoke')`); nunca dependa de variável de ambiente para escolher o perfil.
 4. Novos fluxos de negócio nascem em `lib/journey.js`; cenários apenas orquestram a execução.

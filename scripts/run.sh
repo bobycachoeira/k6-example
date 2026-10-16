@@ -114,6 +114,11 @@ set -e
 
 echo "finished_at=$(date -Is)" >> "${OUT}/metadata.txt"
 echo "exit_code=${STATUS}" >> "${OUT}/metadata.txt"
+if [ "$STATUS" -eq 0 ]; then
+  echo "result=valido" >> "${OUT}/metadata.txt"
+else
+  echo "result=invalido_threshold_violado" >> "${OUT}/metadata.txt"
+fi
 
 echo ""
 if [ "$STATUS" -eq 0 ]; then

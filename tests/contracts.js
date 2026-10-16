@@ -20,7 +20,13 @@ const modules = [
   { label: 'stress', ns: stress, def: stressDefault },
 ];
 
-const REQUIRED_THRESHOLDS = ['checks', 'http_req_failed', 'http_req_duration', 'api_latency'];
+const REQUIRED_THRESHOLDS = [
+  'checks',
+  'http_req_failed',
+  'http_req_duration',
+  'api_latency',
+  'dropped_iterations',
+];
 
 function validateScenarioShape(label, name, scenario) {
   check(scenario, {
