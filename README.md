@@ -137,6 +137,11 @@ GET_RPS=30 CREATE_RPS=0 DURATION=2m ./scripts/run.sh dynamic
 GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
 ```
 
+> A taxa configurada é de **iterações da jornada por segundo**, não de requisições HTTP.
+> Cada iteração de `getJourney()` dispara 4 requisições (listar posts, ler post, ler comentários,
+> listar usuários) e cada iteração de `createJourney()` dispara 1. Exemplo: `GET_RPS=20` gera
+> ~80 requisições/s no alvo, em paralelo com os ~5 req/s do `CREATE_RPS=5`.
+>
 > Dica de VUs no k6: o número de VUs é por cenário — cenários não compartilham VUs.
 > Uma taxa de chegada (`arrival rate`) também é diferente de VUs fixos: o k6 aloca os VUs
 > necessários para sustentar a taxa configurada.
