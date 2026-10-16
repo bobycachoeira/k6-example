@@ -1,4 +1,5 @@
 import { check } from 'k6';
+import * as metrics from '../lib/metrics/index.js';
 import dynamicDefault, * as dynamic from '../scenarios/dynamic.js';
 import loadDefault, * as load from '../scenarios/load.js';
 import smokeDefault, * as smoke from '../scenarios/smoke.js';
@@ -72,5 +73,22 @@ export default function () {
     'lib/journey.js | getJourney exportado': (m) => typeof m.getJourney === 'function',
     'lib/journey.js | createJourney exportado': (m) => typeof m.createJourney === 'function',
     'lib/journey.js | fullJourney exportado': (m) => typeof m.fullJourney === 'function',
+  });
+
+  check(metrics, {
+    'lib/metrics | métricas comuns exportadas': (m) =>
+      [m.apiLatency, m.apiErrors, m.businessFlows].every(
+        (metric) => typeof metric?.add === 'function',
+      ),
+    'lib/metrics | métricas de leitura exportadas': (m) =>
+      [m.successfulReads, m.failedReads, m.readResponseTime, m.getJourneyDuration].every(
+        (metric) => typeof metric?.add === 'function',
+      ),
+    'lib/metrics | métricas de escrita exportadas': (m) =>
+      [m.successfulCreates, m.failedCreates, m.createResponseTime, m.createJourneyDuration].every(
+        (metric) => typeof metric?.add === 'function',
+      ),
+    'lib/metrics | recorders exportados': (m) =>
+      typeof m.recordRead === 'function' && typeof m.recordCreate === 'function',
   });
 }

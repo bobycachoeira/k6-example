@@ -22,6 +22,10 @@ Métricas-chave:
 - `http_req_duration.values['p(95)']` e `['p(99)']` — latência por requisição
 - `api_latency` — métrica customizada (ms por requisição, tag `name` = rota)
 - `api_errors` — contador de respostas com status >= 400 ou falha de rede, por rota
+- `successful_reads` / `failed_reads` e `successful_creates` / `failed_creates` — contadores por
+  operação das jornadas get/create (falhas podem estar ausentes quando não há amostras)
+- `read_response_time` / `create_response_time` e `get_journey_duration` / `create_journey_duration`
+  — tempos (ms) por operação e por jornada completa
 - `dropped_iterations` — se existir e for > 0, o k6 **não conseguiu sustentar a taxa**
   configurada (faltaram VUs) — sinal de saturação do gerador ou do alvo
 - `business_flows.values.count` — fluxos completos executados

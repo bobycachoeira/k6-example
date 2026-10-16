@@ -12,6 +12,7 @@ Leia antes de alterar qualquer coisa.
 | `config/dynamic.js` | Perfil `dynamic`: jornadas como cenários independentes, taxa por RPS via env |
 | `config/env.js` | `BASE_URL`, `RESULTS_DIR`, tags |
 | `lib/journey.js` | Jornadas (fluxos de negócio): `getJourney`, `createJourney`, `fullJourney` |
+| `lib/metrics/` | Métricas customizadas: `common.js` + uma por jornada (com recorders) |
 | `lib/http-client.js` | Wrapper HTTP com tags e métricas customizadas |
 | `lib/report.js` | `handleSummary` → `summary.json` + `summary.html` |
 | `scenarios/*.js` | Um arquivo por perfil; declara o próprio perfil: `buildOptions('load')` |

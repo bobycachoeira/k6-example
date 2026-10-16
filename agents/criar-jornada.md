@@ -48,7 +48,28 @@ E exporte a função em `scenarios/dynamic.js`:
 export { createJourney, fullJourney, getJourney, postComComentariosJourney };
 ```
 
-## 3. Contratos e documentação
+## 3. Métricas da jornada
+
+Crie `lib/metrics/<jornada>.js` seguindo o padrão das existentes (métricas + recorder):
+
+```js
+import { Counter, Trend } from 'k6/metrics';
+
+export const successfulChecks = new Counter('successful_checks');
+export const failedChecks = new Counter('failed_checks');
+export const checkResponseTime = new Trend('check_response_time', true);
+
+export function recordCheck(ok, startedAt) {
+  (ok ? successfulChecks : failedChecks).add(1);
+  checkResponseTime.add(Date.now() - startedAt);
+  return ok;
+}
+```
+
+Re-exporte em `lib/metrics/index.js`, use o recorder nos passos da jornada (os passos devem
+retornar `boolean`) e adicione os checks em `tests/contracts.js`.
+
+## 4. Contratos e documentação
 
 - `tests/contracts.js`: adicione o check de export no bloco final:
   `'postComComentariosJourney exportado': (m) => typeof m.postComComentariosJourney === 'function'`

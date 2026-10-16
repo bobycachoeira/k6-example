@@ -12,7 +12,7 @@ com opção de dashboards em tempo real via Grafana + InfluxDB.
 
 ```text
 config/       Perfis de execução (smoke/load/stress/spike/dynamic), thresholds e variáveis de ambiente
-lib/          Cliente HTTP, checks, métricas customizadas, jornadas do usuário e relatório HTML
+lib/          Cliente HTTP, checks, jornadas e relatório HTML; lib/metrics/ — métricas por jornada
 scenarios/    Arquivos executáveis pelo k6 (um por perfil)
 scripts/      run.sh — orquestra a execução e guarda todos os resultados; check.sh — valida sem carga
 tests/        contracts.js — testes de contrato dos módulos (1 iteração, sem carga)
@@ -170,6 +170,34 @@ Thresholds globais (em `config/options.js`): `checks > 99%`, `http_req_failed < 
 `http_req_duration p95 < 800ms` e `p99 < 1500ms`, `api_latency p95 < 800ms`.
 Ao violar um threshold, o `run.sh` termina com exit code diferente de zero —
 pronto para uso em pipelines de CI.
+
+## Métricas customizadas
+
+Métricas comuns em `lib/metrics/common.js`:
+
+| Métrica | Tipo | Descrição |
+|---|---|---|
+| `api_latency` | Trend | Tempo por requisição HTTP (tag `name` = rota) |
+| `api_errors` | Counter | Respostas com status ≥ 400 ou falha de rede |
+| `business_flows` | Counter | Fluxos completos executados com sucesso |
+
+Métricas por jornada (um arquivo dedicado em `lib/metrics/` por fluxo):
+
+| Métrica | Tipo | Jornada | Descrição |
+|---|---|---|---|
+| `successful_reads` / `failed_reads` | Counter | get | Leituras com sucesso / com falha |
+| `read_response_time` | Trend | get | Tempo por operação de leitura (ms) |
+| `get_journey_duration` | Trend | get | Duração total da jornada de leitura (ms) |
+| `successful_creates` / `failed_creates` | Counter | create | Escritas com sucesso / com falha |
+| `create_response_time` | Trend | create | Tempo por operação de escrita (ms) |
+| `create_journey_duration` | Trend | create | Duração total da jornada de escrita (ms) |
+
+> Contadores sem amostras (ex.: `failed_reads` em uma execução sem falhas) não aparecem no
+> `summary.json` — isso é esperado no k6.
+
+Padrão para uma nova jornada: crie `lib/metrics/<jornada>.js` exportando as métricas **e um
+recorder** (ex.: `recordRead(ok, startedAt)`), re-exporte em `lib/metrics/index.js` e chame o
+recorder nos passos da jornada. Passo a passo em `agents/criar-jornada.md`.
 
 ## CI
 

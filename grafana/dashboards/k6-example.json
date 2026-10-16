@@ -4,7 +4,7 @@
   "tags": ["k6", "performance"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "time": { "from": "now-30m", "to": "now" },
   "panels": [
@@ -20,7 +20,8 @@
           "refId": "A",
           "rawQuery": true,
           "query": "SELECT percentile(\"value\", 95) FROM \"http_req_duration\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
-          "resultFormat": "time_series"
+          "resultFormat": "time_series",
+          "legendFormat": "http_req_duration"
         }
       ]
     },
@@ -36,7 +37,8 @@
           "refId": "A",
           "rawQuery": true,
           "query": "SELECT sum(\"value\") FROM \"http_reqs\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
-          "resultFormat": "time_series"
+          "resultFormat": "time_series",
+          "legendFormat": "http_reqs"
         }
       ]
     },
@@ -52,7 +54,8 @@
           "refId": "A",
           "rawQuery": true,
           "query": "SELECT max(\"value\") FROM \"vus\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
-          "resultFormat": "time_series"
+          "resultFormat": "time_series",
+          "legendFormat": "vus"
         }
       ]
     },
@@ -68,7 +71,104 @@
           "refId": "A",
           "rawQuery": true,
           "query": "SELECT sum(\"value\") FROM \"http_req_failed\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
-          "resultFormat": "time_series"
+          "resultFormat": "time_series",
+          "legendFormat": "http_req_failed"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Leituras (sucesso x falha)",
+      "datasource": { "type": "influxdb", "uid": "influxdb-k6" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "query": "SELECT sum(\"value\") FROM \"successful_reads\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
+          "resultFormat": "time_series",
+          "legendFormat": "sucesso"
+        },
+        {
+          "refId": "B",
+          "rawQuery": true,
+          "query": "SELECT sum(\"value\") FROM \"failed_reads\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
+          "resultFormat": "time_series",
+          "legendFormat": "falha"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Escritas (sucesso x falha)",
+      "datasource": { "type": "influxdb", "uid": "influxdb-k6" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "query": "SELECT sum(\"value\") FROM \"successful_creates\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
+          "resultFormat": "time_series",
+          "legendFormat": "sucesso"
+        },
+        {
+          "refId": "B",
+          "rawQuery": true,
+          "query": "SELECT sum(\"value\") FROM \"failed_creates\" WHERE $timeFilter GROUP BY time($__interval) fill(0)",
+          "resultFormat": "time_series",
+          "legendFormat": "falha"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Tempo de resposta p95 — leitura x escrita (ms)",
+      "datasource": { "type": "influxdb", "uid": "influxdb-k6" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "query": "SELECT percentile(\"value\", 95) FROM \"read_response_time\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+          "resultFormat": "time_series",
+          "legendFormat": "leitura"
+        },
+        {
+          "refId": "B",
+          "rawQuery": true,
+          "query": "SELECT percentile(\"value\", 95) FROM \"create_response_time\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+          "resultFormat": "time_series",
+          "legendFormat": "escrita"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Duração das jornadas p95 (ms)",
+      "datasource": { "type": "influxdb", "uid": "influxdb-k6" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "query": "SELECT percentile(\"value\", 95) FROM \"get_journey_duration\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+          "resultFormat": "time_series",
+          "legendFormat": "getJourney"
+        },
+        {
+          "refId": "B",
+          "rawQuery": true,
+          "query": "SELECT percentile(\"value\", 95) FROM \"create_journey_duration\" WHERE $timeFilter GROUP BY time($__interval) fill(null)",
+          "resultFormat": "time_series",
+          "legendFormat": "createJourney"
         }
       ]
     }
