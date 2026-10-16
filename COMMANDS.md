@@ -144,3 +144,13 @@ gh run list        # histórico das execuções (check + smoke a cada push/PR)
 gh run watch       # acompanha a execução mais recente
 gh run view        # detalhes da última execução
 ```
+
+Baixar os artefatos direto pelo CLI (sem navegador):
+
+```bash
+gh run download -n k6-resultados -D /tmp/k6-resultados   # última execução
+gh run download <run-id> -n k6-resultados                # execução específica
+```
+
+> O Chrome às vezes bloqueia o `.zip` de artefatos do GitHub como "arquivo perigoso"
+> (falso positivo do Safe Browsing). Com `gh run download` você contorna isso por completo.
