@@ -20,6 +20,8 @@
 - **Jornadas**: escrita encadeada (criar → ler o recurso criado)
 - **Qualidade**: comparar thresholds com baseline versionado e falhar se afrouxarem
 - **CI**: rodar `k6 inspect` do dynamic em matriz de envs; smoke em PR e load agendado (cron)
+- **Outputs**: `--out prometheus-rw` (remote write para Prometheus) e `--console-output`
+  (log do script separado do terminal)
 - **Observabilidade**: painel por jornada no dashboard Grafana (tag `journey`)
 
 ## Regras

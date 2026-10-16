@@ -4,11 +4,34 @@ const JOURNEYS = {
   full: { exec: 'fullJourney', envVar: 'FULL_RPS', defaultRate: 0 },
 };
 
+function selectedJourneys() {
+  return (__ENV.SCENARIOS || '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
 export function buildDynamicScenarios() {
   const duration = __ENV.DURATION || '1m';
+  const selection = selectedJourneys();
+
+  if (selection.length > 0) {
+    const unknown = selection.filter((name) => !JOURNEYS[name]);
+    if (unknown.length > 0) {
+      throw new Error(
+        `SCENARIOS inválido: "${unknown.join(', ')}". Use: ${Object.keys(JOURNEYS).join(', ')}`,
+      );
+    }
+  }
+
   const scenarios = {};
 
   for (const [journey, { exec, envVar, defaultRate }] of Object.entries(JOURNEYS)) {
+    const selected = selection.includes(journey);
+    if (selection.length > 0 && !selected) {
+      continue;
+    }
+
     const raw = __ENV[envVar];
     const rate = raw === undefined || raw === '' ? defaultRate : Number(raw);
 
@@ -17,6 +40,11 @@ export function buildDynamicScenarios() {
     }
 
     if (rate === 0) {
+      if (selected) {
+        throw new Error(
+          `Jornada "${journey}" selecionada em SCENARIOS, mas ${envVar}=0 — defina uma taxa maior que 0.`,
+        );
+      }
       continue;
     }
 

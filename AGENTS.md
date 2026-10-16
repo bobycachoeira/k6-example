@@ -41,6 +41,7 @@ Leia antes de alterar qualquer coisa.
 ./scripts/check.sh                                 # validações sem carga (rápido — sempre rode)
 ./scripts/run.sh smoke                             # execução real curta contra o alvo
 GET_RPS=20 CREATE_RPS=5 ./scripts/run.sh dynamic   # perfil por RPS
+SCENARIOS=get,create ./scripts/run.sh dynamic      # seleção explícita de jornadas
 ./scripts/run.sh load --influx                     # métricas em tempo real no Grafana local
 k6 run tests/contracts.js                          # contratos isolados
 docker compose up -d influxdb grafana              # observabilidade (localhost:3000)

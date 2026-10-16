@@ -100,6 +100,21 @@ expect_fail "todas as jornadas em 0 deve falhar" \
 expect_fail "RPS inválido deve falhar" \
   k6 inspect -e GET_RPS=abc scenarios/dynamic.js
 
+echo "== 3b. Perfil dynamic: seleção explícita via SCENARIOS =="
+expect "SCENARIOS=get => só get" \
+  "get" \
+  "$(scenarios_of -e SCENARIOS=get scenarios/dynamic.js)"
+
+expect "SCENARIOS=create,full => create e full" \
+  "create,full" \
+  "$(scenarios_of -e SCENARIOS=create,full -e FULL_RPS=1 scenarios/dynamic.js)"
+
+expect_fail "SCENARIOS com nome inválido deve falhar" \
+  k6 inspect -e SCENARIOS=xyz scenarios/dynamic.js
+
+expect_fail "jornada selecionada com RPS 0 deve falhar" \
+  k6 inspect -e SCENARIOS=create -e CREATE_RPS=0 scenarios/dynamic.js
+
 echo "== 4. Contratos dos módulos (k6 run, 1 iteração, sem carga) =="
 if CONTRACT_OUT="$(k6 run tests/contracts.js 2>&1)"; then
   ok "contratos passaram (execs, executores, thresholds)"

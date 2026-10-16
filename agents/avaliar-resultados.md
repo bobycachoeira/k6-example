@@ -11,7 +11,7 @@ Cada execução do `run.sh` cria `results/<data>-<perfil>/`:
 | `metrics.csv` | Série temporal simples (planilhas) |
 | `raw.json.gz` | Stream completo, ponto a ponto (análise fina por tag) |
 | `console.log` | Saída do k6 (avisos, resumo textual, exit) |
-| `metadata.txt` | Perfil, commit, versão do k6, alvo, horários, exit code |
+| `metadata.txt` | Perfil, run_id/testid, commit, versão do k6, alvo, horários, exit code |
 
 ## Como ler o `summary.json`
 

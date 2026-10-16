@@ -64,6 +64,17 @@ Para criar uma nova — por exemplo, um fluxo que combina leitura e escrita de o
 ./scripts/run.sh load --influx
 ```
 
+Flags disponíveis:
+
+| Flag | Efeito |
+|---|---|
+| `--influx` | Envia métricas em tempo real ao InfluxDB/Grafana local |
+| `--logs-json` | Logs do k6 em JSON (útil para pipelines) |
+
+O `run.sh` carrega um `.env` da raiz automaticamente (copie o `.env.example`), gera um `RUN_ID`
+por execução e adiciona as tags `testid`/`testName` às métricas — o cabeçalho impresso mostra
+k6, commit, perfil, run_id e alvo.
+
 Para apontar para outro alvo:
 
 ```bash
@@ -92,7 +103,7 @@ Cada execução cria `results/<data>-<perfil>/` com:
 | `summary.html` | Relatório visual (thresholds e métricas) |
 | `raw.json.gz` | Stream completo de métricas, ponto a ponto |
 | `metrics.csv` | Métricas em CSV para planilhas/análises |
-| `metadata.txt` | Perfil, commit, versão do k6, alvo e horários |
+| `metadata.txt` | Perfil, run_id/testid, commit, versão do k6, alvo, horários e exit code |
 
 ## Validando scripts sem rodar carga
 
@@ -159,6 +170,7 @@ para não executar uma jornada:
 | `CREATE_RPS` | `createJourney` (escrita) | 5 |
 | `FULL_RPS` | `fullJourney` (completa) | 0 (desligada) |
 | `DURATION` | Duração de cada cenário | 1m |
+| `SCENARIOS` | Seleção explícita de jornadas (ex.: `get,create`) | vazio (usa as taxas) |
 
 ```bash
 # 30 req/s só de leitura, por 2 minutos
@@ -166,7 +178,13 @@ GET_RPS=30 CREATE_RPS=0 DURATION=2m ./scripts/run.sh dynamic
 
 # Leitura e escrita juntas, mix 20/5 req/s por 5 minutos
 GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
+
+# Seleção explícita (taxas padrão aplicadas às jornadas escolhidas)
+SCENARIOS=get,create ./scripts/run.sh dynamic
 ```
+
+> Jornada selecionada em `SCENARIOS` com taxa resolvida em 0 falha com mensagem clara — para
+> rodar a `full` via `SCENARIOS`, defina `FULL_RPS` maior que 0.
 
 > A taxa configurada é de **iterações da jornada por segundo**, não de requisições HTTP.
 > Cada iteração de `getJourney()` dispara 4 requisições (listar posts, ler post, ler comentários,
