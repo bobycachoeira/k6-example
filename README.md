@@ -59,6 +59,9 @@ Para criar uma nova — por exemplo, um fluxo que combina leitura e escrita de o
 ./scripts/run.sh load     # carga constante com rampa
 ./scripts/run.sh stress   # pressão crescente até o limite
 ./scripts/run.sh spike    # pico súbito de tráfego
+
+# Com métricas em tempo real no Grafana local (requer docker compose up)
+./scripts/run.sh load --influx
 ```
 
 Para apontar para outro alvo:
@@ -74,6 +77,9 @@ sem precisar de variáveis de ambiente:
 k6 run scenarios/load.js
 K6_OUT=influxdb=http://localhost:8086/k6 k6 run scenarios/load.js
 ```
+
+> Atenção: o k6 ignora `K6_OUT` quando existem flags `--out` (caso do `run.sh`). Para enviar
+> métricas ao Grafana via orquestrador, use `./scripts/run.sh <perfil> --influx`.
 
 ## Resultados gerados
 
@@ -113,13 +119,18 @@ docker compose up -d influxdb grafana
 # Grafana em http://localhost:3000 (acesso anônimo habilitado)
 ```
 
-Envie métricas em tempo real para o InfluxDB durante a execução:
+Envie métricas em tempo real durante a execução:
 
 ```bash
+./scripts/run.sh load --influx          # recomendado: via run.sh
+# ou, executando o k6 direto:
 K6_OUT=influxdb=http://localhost:8086/k6 k6 run scenarios/load.js
 ```
 
-O dashboard **k6 — Visão geral** já vem provisionado (latência p95, RPS, VUs e falhas).
+> URL customizada do InfluxDB: `K6_INFLUX_URL=http://outro-host:8086/k6 ./scripts/run.sh smoke --influx`
+
+O dashboard **k6 — Visão geral** já vem provisionado (latência p95, RPS, VUs, falhas, leituras,
+escritas e tempos por jornada).
 Ou rode o k6 dentro do Compose:
 
 ```bash
