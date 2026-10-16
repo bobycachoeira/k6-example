@@ -12,6 +12,9 @@ jobs:
 
       - uses: grafana/setup-k6-action@v1
 
+      - name: Validar scripts (sem carga)
+        run: ./scripts/check.sh
+
       - name: Executar cenário smoke
         run: ./scripts/run.sh smoke
 

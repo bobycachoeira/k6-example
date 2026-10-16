@@ -11,10 +11,11 @@ com opção de dashboards em tempo real via Grafana + InfluxDB.
 ## Estrutura
 
 ```text
-config/       Perfis de execução (smoke/load/stress/spike), thresholds e variáveis de ambiente
-lib/          Cliente HTTP, checks, métricas customizadas, jornada do usuário e relatório HTML
+config/       Perfis de execução (smoke/load/stress/spike/dynamic), thresholds e variáveis de ambiente
+lib/          Cliente HTTP, checks, métricas customizadas, jornadas do usuário e relatório HTML
 scenarios/    Arquivos executáveis pelo k6 (um por perfil)
-scripts/      run.sh — orquestra a execução e guarda todos os resultados
+scripts/      run.sh — orquestra a execução e guarda todos os resultados; check.sh — valida sem carga
+tests/        contracts.js — testes de contrato dos módulos (1 iteração, sem carga)
 grafana/      Provisioning do Grafana (datasource + dashboard)
 results/      Artefatos gerados (ignorados pelo Git)
 ```
@@ -86,6 +87,24 @@ Cada execução cria `results/<data>-<perfil>/` com:
 | `metrics.csv` | Métricas em CSV para planilhas/análises |
 | `metadata.txt` | Perfil, commit, versão do k6, alvo e horários |
 
+## Validando scripts sem rodar carga
+
+```bash
+./scripts/check.sh
+```
+
+Valida tudo **sem disparar requisições** contra o alvo:
+
+- sintaxe e geração de opções de todos os perfis (`k6 inspect`);
+- presença dos thresholds obrigatórios em cada perfil;
+- seleção de jornadas do perfil `dynamic` por RPS — incluindo casos de erro (todas as jornadas
+  em 0, valor inválido);
+- contratos dos módulos com 1 iteração e sem carga (`k6 run tests/contracts.js`): funções `exec`
+  exportadas, executor e duração/estágios de cada cenário, thresholds mínimos;
+- sintaxe do `scripts/run.sh`.
+
+O check roda no CI antes do smoke e requer `python3` (apenas para ler o JSON do `k6 inspect`).
+
 ## Observabilidade com Grafana
 
 ```bash
@@ -153,8 +172,8 @@ pronto para uso em pipelines de CI.
 
 ## CI
 
-O workflow `.github/workflows/k6-smoke.yml` executa o perfil `smoke` a cada push/PR e
-publica a pasta `results/` como artefato.
+O workflow `.github/workflows/k6-smoke.yml` roda `./scripts/check.sh` (validações sem carga) e o
+perfil `smoke` a cada push/PR, publicando a pasta `results/` como artefato.
 
 ## Licença
 
