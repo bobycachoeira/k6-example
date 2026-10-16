@@ -1,0 +1,23 @@
+name: k6 smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Executar cenário smoke
+        run: ./scripts/run.sh smoke
+
+      - name: Publicar artefatos da execução
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-resultados
+          path: results/
