@@ -1,7 +1,7 @@
 const JOURNEYS = {
-  get: { exec: 'getJourney', envVar: 'GET_RPS', defaultRate: 20 },
-  create: { exec: 'createJourney', envVar: 'CREATE_RPS', defaultRate: 5 },
-  full: { exec: 'fullJourney', envVar: 'FULL_RPS', defaultRate: 0 },
+  get: { exec: 'getJourney', envVar: 'GET_RPS', defaultRate: 20, requestsPerIteration: 4 },
+  create: { exec: 'createJourney', envVar: 'CREATE_RPS', defaultRate: 5, requestsPerIteration: 1 },
+  full: { exec: 'fullJourney', envVar: 'FULL_RPS', defaultRate: 0, requestsPerIteration: 5 },
 };
 
 const JOURNEY_NAMES = Object.keys(JOURNEYS).join(', ');
@@ -79,6 +79,11 @@ function buildMixScenarios(duration, mixRaw) {
     throw new Error(`TOTAL_RPS inválido: "${__ENV.TOTAL_RPS}" (use um número > 0)`);
   }
 
+  const unit = __ENV.MIX_UNIT || 'req';
+  if (unit !== 'req' && unit !== 'iter') {
+    throw new Error(`MIX_UNIT inválido: "${unit}" (use "req" ou "iter")`);
+  }
+
   const parts = parseMix(mixRaw);
   if (parts.length === 0) {
     throw new Error('MIX vazio — formato: MIX=get:70,create:30');
@@ -88,7 +93,11 @@ function buildMixScenarios(duration, mixRaw) {
   const scenarios = {};
 
   for (const { journey, weight } of parts) {
-    const rate = Math.max(1, Math.round((total * weight) / totalWeight));
+    const share = (total * weight) / totalWeight;
+    const rate =
+      unit === 'req'
+        ? Math.max(1, Math.round(share / JOURNEYS[journey].requestsPerIteration))
+        : Math.max(1, Math.round(share));
     scenarios[journey] = scenarioFor(journey, rate, duration, 'mix');
   }
 
@@ -101,6 +110,10 @@ export function buildDynamicScenarios() {
   const mixRaw = hasEnv('MIX') ? __ENV.MIX : hasEnv('TOTAL_RPS') ? DEFAULT_MIX : null;
   if (mixRaw !== null) {
     return buildMixScenarios(duration, mixRaw);
+  }
+
+  if (hasEnv('MIX_UNIT')) {
+    throw new Error('MIX_UNIT só é usado no modo mix (com TOTAL_RPS e/ou MIX)');
   }
 
   const selection = selectedJourneys();

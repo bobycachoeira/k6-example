@@ -68,7 +68,7 @@ Flags:
 Variáveis principais:
   BASE_URL, ENV_NAME, RUN_ID, K6_INFLUX_URL, K6_EXTRA_FLAGS
   GET_RPS, CREATE_RPS, FULL_RPS, DURATION, SCENARIOS     (perfil dynamic)
-  TOTAL_RPS, MIX                                          (modo mix; MIX padrão: get:20,create:5)
+  TOTAL_RPS, MIX, MIX_UNIT   (modo mix; req/s por padrão, iter = iterações; MIX padrão get:20,create:5)
 
 Exemplos:
   ./scripts/run.sh smoke

@@ -79,20 +79,24 @@ SCENARIOS=full FULL_RPS=2 DURATION=1m ./scripts/run.sh dynamic
 ### 4.3 Mix percentual (mistura de produção) — `TOTAL_RPS` + `MIX`
 
 ```bash
-# Só o total: usa o mix padrão (get:20,create:5 ⇒ ~80/20), por 2 minutos
+# 300 requisições/s totais (mix padrão get:20,create:5 ⇒ ~80/20), por 2 minutos
 TOTAL_RPS=300 DURATION=2m ./scripts/run.sh dynamic
 
-# 100 iterações/s totais: 70% leitura + 30% escrita, por 2 minutos
+# 100 requisições/s: 70% leitura + 30% escrita
 TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
+
+# A mesma divisão, mas em iterações de jornada (sem conversão por requisições)
+TOTAL_RPS=100 MIX=get:70,create:30 MIX_UNIT=iter DURATION=2m ./scripts/run.sh dynamic
 
 # Três jornadas com pesos relativos (normalizados automaticamente)
 TOTAL_RPS=50 MIX=get:5,create:3,full:2 DURATION=1m ./scripts/run.sh dynamic
 ```
 
 > `MIX` é opcional — sem ele vale o padrão `get:20,create:5`. Pesos não precisam somar 100
-> (são normalizados). Taxas são arredondadas (mínimo 1/s). No modo mix use **apenas**
-> `TOTAL_RPS`, `MIX` e `DURATION` — combinar com `SCENARIOS`/`*_RPS` gera erro. Lembre: a taxa
-> é de **iterações da jornada** (a `get` faz 4 requisições por iteração).
+> (são normalizados). Por padrão `TOTAL_RPS` é **requisições HTTP/s**; com `MIX_UNIT=iter` passa
+> a ser iterações da jornada/s. Conversão: `getJourney` = 4 reqs/iteração, `createJourney` = 1,
+> `fullJourney` = 5. Taxas de iteração são arredondadas (mínimo 1/s). No modo mix use **apenas**
+> `TOTAL_RPS`, `MIX`, `MIX_UNIT` e `DURATION`.
 
 ### 4.4 Pré-visualizar sem rodar (dry-run de opções)
 
@@ -120,7 +124,7 @@ k6 inspect -e GET_RPS=50 scenarios/dynamic.js
 | `GET_RPS` / `CREATE_RPS` / `FULL_RPS` | `GET_RPS=30` | dynamic |
 | `DURATION` | `DURATION=2m` | dynamic |
 | `SCENARIOS` | `SCENARIOS=get,create` | dynamic |
-| `TOTAL_RPS` (+ `MIX` opcional) | `TOTAL_RPS=300` ou `TOTAL_RPS=100 MIX=get:70,create:30` | dynamic (modo mix) |
+| `TOTAL_RPS`, `MIX`, `MIX_UNIT` | `TOTAL_RPS=300` ou `TOTAL_RPS=100 MIX=get:70,create:30` | dynamic (modo mix; unidade `req` padrão / `iter`) |
 | `K6_OUT` | — | só com `k6 run` direto (ignorado com `--out`) |
 
 ## 6. Observabilidade (Grafana + InfluxDB)

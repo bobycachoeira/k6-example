@@ -138,17 +138,21 @@ expect_fail "jornada selecionada com RPS 0 deve falhar" \
   k6 inspect -e SCENARIOS=create -e CREATE_RPS=0 scenarios/dynamic.js
 
 echo "== 3c. Perfil dynamic: modo mix (TOTAL_RPS + percentuais) =="
-expect "mix: get recebe 70% de 100" \
-  "70|getJourney" \
+expect "mix req (padrão): get 70 req/s => 18 it/s (4 reqs cada)" \
+  "18|getJourney" \
   "$(rate_of get -e TOTAL_RPS=100 -e MIX=get:70,create:30 scenarios/dynamic.js)"
 
-expect "mix: create recebe 30% de 100" \
+expect "mix req (padrão): create 30 req/s => 30 it/s (1 req cada)" \
   "30|createJourney" \
   "$(rate_of create -e TOTAL_RPS=100 -e MIX=get:70,create:30 scenarios/dynamic.js)"
 
-expect "mix: pesos relativos normalizados (1:1 de 10 = 5)" \
+expect "mix iter: get recebe 70 it/s de 100" \
+  "70|getJourney" \
+  "$(rate_of get -e TOTAL_RPS=100 -e MIX=get:70,create:30 -e MIX_UNIT=iter scenarios/dynamic.js)"
+
+expect "mix iter: pesos relativos normalizados (1:1 de 10 = 5)" \
   "5|getJourney" \
-  "$(rate_of get -e TOTAL_RPS=10 -e MIX=get:1,create:1 scenarios/dynamic.js)"
+  "$(rate_of get -e TOTAL_RPS=10 -e MIX=get:1,create:1 -e MIX_UNIT=iter scenarios/dynamic.js)"
 
 expect "mix: taxa mínima de 1 por jornada" \
   "1|createJourney" \
@@ -170,11 +174,17 @@ expect_fail "MIX com peso inválido deve falhar" \
 expect_fail "MIX combinado com SCENARIOS deve falhar" \
   k6 inspect -e TOTAL_RPS=10 -e MIX=get:1 -e SCENARIOS=get scenarios/dynamic.js
 
-expect "mix padrão (só TOTAL_RPS): get recebe 240 de 300" \
-  "240|getJourney" \
+expect_fail "MIX_UNIT inválido deve falhar" \
+  k6 inspect -e TOTAL_RPS=10 -e MIX=get:1 -e MIX_UNIT=xyz scenarios/dynamic.js
+
+expect_fail "MIX_UNIT sem mix deve falhar" \
+  k6 inspect -e MIX_UNIT=iter scenarios/dynamic.js
+
+expect "mix padrão (req): get 240 req/s de 300 => 60 it/s" \
+  "60|getJourney" \
   "$(rate_of get -e TOTAL_RPS=300 scenarios/dynamic.js)"
 
-expect "mix padrão (só TOTAL_RPS): create recebe 60 de 300" \
+expect "mix padrão (req): create 60 req/s de 300 => 60 it/s" \
   "60|createJourney" \
   "$(rate_of create -e TOTAL_RPS=300 scenarios/dynamic.js)"
 
