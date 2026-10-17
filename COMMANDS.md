@@ -66,7 +66,10 @@ próprio). Ele tem **3 modos** — escolha um por execução:
 ./scripts/run.sh dynamic                            # padrão: get 20/s + create 5/s por 1m
 GET_RPS=30 CREATE_RPS=0 DURATION=2m ./scripts/run.sh dynamic
 GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
-FULL_RPS=5 DURATION=1m ./scripts/run.sh dynamic     # jornada completa (com pausa entre iterações)
+
+# Só a jornada completa (get + create + pausa entre iterações)
+SCENARIOS=full FULL_RPS=2 DURATION=2m ./scripts/run.sh dynamic
+GET_RPS=0 CREATE_RPS=0 FULL_RPS=5 DURATION=1m ./scripts/run.sh dynamic   # equivalente, zerando as outras
 ```
 
 ### 4.2 Seleção explícita de jornadas

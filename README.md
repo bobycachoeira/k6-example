@@ -184,10 +184,17 @@ GET_RPS=20 CREATE_RPS=5 DURATION=5m ./scripts/run.sh dynamic
 
 # Seleção explícita (taxas padrão aplicadas às jornadas escolhidas)
 SCENARIOS=get,create ./scripts/run.sh dynamic
+
+# Só a jornada completa (get + create + pausa entre iterações)
+SCENARIOS=full FULL_RPS=2 DURATION=2m ./scripts/run.sh dynamic
 ```
 
 > Jornada selecionada em `SCENARIOS` com taxa resolvida em 0 falha com mensagem clara — para
 > rodar a `full` via `SCENARIOS`, defina `FULL_RPS` maior que 0.
+>
+> Atenção ao contrário: `FULL_RPS=5` **sozinho não desliga as outras jornadas** (get/create
+> continuam nos padrões 20/5). Para rodar **só a `full`**, use `SCENARIOS=full` ou zere as demais
+> (`GET_RPS=0 CREATE_RPS=0`).
 
 #### Modo mix (mistura de produção)
 
