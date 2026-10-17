@@ -170,8 +170,16 @@ expect_fail "MIX com peso inválido deve falhar" \
 expect_fail "MIX combinado com SCENARIOS deve falhar" \
   k6 inspect -e TOTAL_RPS=10 -e MIX=get:1 -e SCENARIOS=get scenarios/dynamic.js
 
-expect_fail "TOTAL_RPS sem MIX deve falhar" \
-  k6 inspect -e TOTAL_RPS=10 scenarios/dynamic.js
+expect "mix padrão (só TOTAL_RPS): get recebe 240 de 300" \
+  "240|getJourney" \
+  "$(rate_of get -e TOTAL_RPS=300 scenarios/dynamic.js)"
+
+expect "mix padrão (só TOTAL_RPS): create recebe 60 de 300" \
+  "60|createJourney" \
+  "$(rate_of create -e TOTAL_RPS=300 scenarios/dynamic.js)"
+
+expect_fail "mix padrão combinado com GET_RPS deve falhar" \
+  k6 inspect -e TOTAL_RPS=300 -e GET_RPS=10 scenarios/dynamic.js
 
 echo "== 4. Contratos dos módulos (k6 run, 1 iteração, sem carga) =="
 if CONTRACT_OUT="$(k6 run tests/contracts.js 2>&1)"; then

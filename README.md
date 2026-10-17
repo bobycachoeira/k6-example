@@ -197,9 +197,12 @@ mistura real de tráfego (use os percentuais do seu APM/produção):
 | Variável | Papel |
 |---|---|
 | `TOTAL_RPS` | Total de iterações/s somando todas as jornadas |
-| `MIX` | Lista `jornada:peso,...` — os pesos são normalizados (não precisam somar 100) |
+| `MIX` | Lista `jornada:peso,...` — **opcional** (padrão: `get:20,create:5`); pesos normalizados |
 
 ```bash
+# Só o total: usa o mix padrão (get:20,create:5 ⇒ ~80/20)
+TOTAL_RPS=300 DURATION=2m ./scripts/run.sh dynamic
+
 # 100 iterações/s totais: 70% leitura + 30% escrita, por 2 minutos
 TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
 

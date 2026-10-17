@@ -6,6 +6,10 @@ const JOURNEYS = {
 
 const JOURNEY_NAMES = Object.keys(JOURNEYS).join(', ');
 const MIX_CONFLICTS = ['SCENARIOS', 'GET_RPS', 'CREATE_RPS', 'FULL_RPS'];
+const DEFAULT_MIX = Object.entries(JOURNEYS)
+  .filter(([, journey]) => journey.defaultRate > 0)
+  .map(([name, journey]) => `${name}:${journey.defaultRate}`)
+  .join(',');
 
 function hasEnv(name) {
   return __ENV[name] !== undefined && __ENV[name] !== '';
@@ -31,10 +35,11 @@ function scenarioFor(journey, rate, duration, mode) {
   };
 }
 
-function parseMix() {
+function parseMix(mixRaw) {
   const seen = new Set();
 
-  return __ENV.MIX.split(',')
+  return mixRaw
+    .split(',')
     .map((part) => part.trim())
     .filter(Boolean)
     .map((part) => {
@@ -57,7 +62,7 @@ function parseMix() {
     });
 }
 
-function buildMixScenarios(duration) {
+function buildMixScenarios(duration, mixRaw) {
   const conflicts = MIX_CONFLICTS.filter(hasEnv);
   if (conflicts.length > 0) {
     throw new Error(
@@ -74,7 +79,7 @@ function buildMixScenarios(duration) {
     throw new Error(`TOTAL_RPS inválido: "${__ENV.TOTAL_RPS}" (use um número > 0)`);
   }
 
-  const parts = parseMix();
+  const parts = parseMix(mixRaw);
   if (parts.length === 0) {
     throw new Error('MIX vazio — formato: MIX=get:70,create:30');
   }
@@ -93,14 +98,9 @@ function buildMixScenarios(duration) {
 export function buildDynamicScenarios() {
   const duration = __ENV.DURATION || '1m';
 
-  if (hasEnv('MIX')) {
-    return buildMixScenarios(duration);
-  }
-
-  if (hasEnv('TOTAL_RPS')) {
-    throw new Error(
-      'TOTAL_RPS só é usado junto com MIX=... (ex.: TOTAL_RPS=100 MIX=get:70,create:30)',
-    );
+  const mixRaw = hasEnv('MIX') ? __ENV.MIX : hasEnv('TOTAL_RPS') ? DEFAULT_MIX : null;
+  if (mixRaw !== null) {
+    return buildMixScenarios(duration, mixRaw);
   }
 
   const selection = selectedJourneys();

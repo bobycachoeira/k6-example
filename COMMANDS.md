@@ -79,6 +79,9 @@ SCENARIOS=full FULL_RPS=2 DURATION=1m ./scripts/run.sh dynamic
 ### 4.3 Mix percentual (mistura de produção) — `TOTAL_RPS` + `MIX`
 
 ```bash
+# Só o total: usa o mix padrão (get:20,create:5 ⇒ ~80/20), por 2 minutos
+TOTAL_RPS=300 DURATION=2m ./scripts/run.sh dynamic
+
 # 100 iterações/s totais: 70% leitura + 30% escrita, por 2 minutos
 TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
 
@@ -86,9 +89,10 @@ TOTAL_RPS=100 MIX=get:70,create:30 DURATION=2m ./scripts/run.sh dynamic
 TOTAL_RPS=50 MIX=get:5,create:3,full:2 DURATION=1m ./scripts/run.sh dynamic
 ```
 
-> Pesos não precisam somar 100 (são normalizados). Taxas são arredondadas (mínimo 1/s).
-> No modo mix use **apenas** `TOTAL_RPS`, `MIX` e `DURATION` — combinar com `SCENARIOS`/`*_RPS`
-> gera erro. Lembre: a taxa é de **iterações da jornada** (a `get` faz 4 requisições por iteração).
+> `MIX` é opcional — sem ele vale o padrão `get:20,create:5`. Pesos não precisam somar 100
+> (são normalizados). Taxas são arredondadas (mínimo 1/s). No modo mix use **apenas**
+> `TOTAL_RPS`, `MIX` e `DURATION` — combinar com `SCENARIOS`/`*_RPS` gera erro. Lembre: a taxa
+> é de **iterações da jornada** (a `get` faz 4 requisições por iteração).
 
 ### 4.4 Pré-visualizar sem rodar (dry-run de opções)
 
@@ -116,7 +120,7 @@ k6 inspect -e GET_RPS=50 scenarios/dynamic.js
 | `GET_RPS` / `CREATE_RPS` / `FULL_RPS` | `GET_RPS=30` | dynamic |
 | `DURATION` | `DURATION=2m` | dynamic |
 | `SCENARIOS` | `SCENARIOS=get,create` | dynamic |
-| `TOTAL_RPS` + `MIX` | `TOTAL_RPS=100 MIX=get:70,create:30` | dynamic (modo mix) |
+| `TOTAL_RPS` (+ `MIX` opcional) | `TOTAL_RPS=300` ou `TOTAL_RPS=100 MIX=get:70,create:30` | dynamic (modo mix) |
 | `K6_OUT` | — | só com `k6 run` direto (ignorado com `--out`) |
 
 ## 6. Observabilidade (Grafana + InfluxDB)
